@@ -1,0 +1,682 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>智能座舱产品库</title>
+<style>
+:root{
+  --bg:#EAEAEF;--surface:#FFFFFF;--subtle:#F3F3F7;--border:#D8D8E1;--text:#000111;--muted:#5F6070;
+  --brand:#434BFF;--brand-secondary:#273CD9;--brand-soft:#ECEEFF;--orange:#D9793F;--teal:#338A8A;
+  --radius:10px;--shadow:0 14px 36px rgba(0,1,17,.08);--sidebar:288px;
+  --font:"MiSans","SF Pro Display","SF Pro Text","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:14px/1.55 var(--font)}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+a{color:var(--brand)}
+[hidden]{display:none!important}
+.muted{color:var(--muted)}
+
+/* header */
+.header{position:sticky;top:0;z-index:30;height:70px;display:flex;align-items:center;gap:20px;padding:0 24px;background:rgba(255,255,255,.96);border-bottom:1px solid rgba(51,52,68,.14)}
+.logo{display:flex;align-items:center;white-space:nowrap}
+.logo img{width:124px;height:38px;display:block;object-fit:contain;object-position:center;margin-right:24px}
+.logo-divider{width:1px;height:24px;background:rgba(51,52,68,.22);display:block}
+.logo-title{margin-left:22px;font-size:19px;font-weight:500;letter-spacing:.04em;color:var(--text)}
+.tabs{display:flex;gap:2px;margin-left:auto;background:#F4F4F8;border:1px solid rgba(51,52,68,.12);border-radius:8px;padding:3px}
+.tabs button{border:0;background:transparent;padding:6px 14px;border-radius:6px;color:var(--muted);font-weight:500;font-size:14px}
+.tabs button:hover{color:var(--brand)}
+.tabs button.on{background:var(--brand);color:#fff}
+.header-search{display:flex;align-items:center;gap:6px}
+.search-toggle{border:0;background:transparent;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;color:var(--muted)}
+.search-toggle:hover{background:var(--subtle);color:var(--text)}
+.search-toggle svg{width:19px;height:19px}
+#q{width:0;padding:0;border:1px solid transparent;border-radius:8px;background:var(--subtle);outline:none;transition:width .2s,padding .2s}
+.header-search.open #q{width:min(300px,42vw);padding:7px 12px;border-color:var(--border)}
+#q:focus{border-color:var(--brand);background:var(--surface)}
+
+/* layout */
+.body{display:flex;min-height:calc(100vh - 70px)}
+.sidebar{width:var(--sidebar);flex:0 0 var(--sidebar);border-right:1px solid rgba(51,52,68,.14);background:#F7F7FA;padding:20px 16px 32px;position:sticky;top:70px;height:calc(100vh - 70px);overflow:auto;transition:width .18s,flex-basis .18s}
+.side-h{display:flex;align-items:center;justify-content:space-between;padding:0 8px;margin-bottom:8px}
+.side-h h2{margin:0;font-size:16px;font-weight:600;letter-spacing:.01em}
+.side-actions{display:flex;align-items:center;gap:10px}
+.linkish{border:0;background:none;color:#858694;padding:0;font-weight:500;font-size:12px}
+.linkish:hover{color:var(--brand)}
+.sidebar-toggle{border:1px solid rgba(51,52,68,.14);background:transparent;width:28px;height:28px;border-radius:6px;display:grid;place-items:center;color:var(--muted)}
+.sidebar-toggle:hover{background:var(--brand-soft);color:var(--brand);border-color:rgba(67,75,255,.2)}
+.sidebar-toggle svg{width:14px;height:14px}
+.sidebar.collapsed{width:56px;flex-basis:56px;padding:14px 8px;overflow:hidden}
+.sidebar.collapsed .side-h{padding:0;justify-content:center}
+.sidebar.collapsed .side-h h2,.sidebar.collapsed #clearAll,.sidebar.collapsed #filterGroups{display:none}
+.sidebar.collapsed .sidebar-toggle svg{transform:rotate(180deg)}
+.section{margin-top:24px}
+.section h3{margin:0 8px 10px;font-size:12px;font-weight:600;letter-spacing:.08em;color:#737482}
+.sub{font-size:12px;color:var(--muted);margin:9px 0 3px}
+.opt{display:flex;align-items:center;gap:10px;min-height:36px;padding:8px 10px;border-radius:7px;cursor:pointer;font-size:15px;user-select:none;transition:background .14s}
+.opt+.opt{margin-top:2px}
+.opt:hover{background:#EFEFF4}
+.opt:has(input:checked){background:var(--brand-soft);color:var(--brand-secondary);font-weight:500}
+.opt input{accent-color:var(--brand);width:15px;height:15px;flex:0 0 auto}
+.opt span{flex:1}
+.opt em{font-style:normal;font-size:12px;color:var(--muted)}
+.opt.zero span,.opt.zero em{color:#B0B1BC}
+
+.main{flex:1;min-width:0;background:#F8F8FA;display:flex;flex-direction:column}
+.toolbar{position:sticky;top:70px;z-index:16;display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:18px 28px 16px;background:rgba(255,255,255,.92);backdrop-filter:blur(6px);border-bottom:1px solid rgba(51,52,68,.12)}
+.toolbar h1{margin:0;font-size:25px;font-weight:600;letter-spacing:-.02em}
+.toolbar .lead{color:var(--muted);font-size:13px}
+.content{padding:22px 28px 36px}
+.filter-chips{display:flex;gap:6px;flex-wrap:wrap;flex:1}
+.chip{border:1px solid var(--border);background:var(--surface);border-radius:999px;padding:2px 10px;font-size:12px}
+.chip:hover{border-color:var(--brand);color:var(--brand)}
+.controls{display:flex;gap:8px;align-items:center;margin-left:auto}
+.select{padding:9px 34px 9px 12px;border:1px solid rgba(51,52,68,.16);border-radius:8px;background:var(--surface);appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 6l4 4 4-4' fill='none' stroke='%235F6070' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;background-size:14px}
+.seg{display:flex;gap:2px;border:1px solid rgba(51,52,68,.16);border-radius:8px;padding:3px;background:#fff}
+.seg button{border:0;background:transparent;padding:7px 12px;border-radius:6px;color:var(--muted)}
+.seg button:hover{color:var(--brand);background:#F4F4F8}
+.seg button.on{background:var(--brand);color:#fff;font-weight:500}
+
+/* 二级筛选条（内容区顶部，可扩展） */
+.filterbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:0 0 14px;margin-bottom:4px;border-bottom:1px solid rgba(51,52,68,.1)}
+.fb-label{font-size:12px;color:var(--muted);margin-right:2px}
+.fb{position:relative}
+.fb-btn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--border);background:var(--surface);
+  border-radius:8px;padding:6px 11px;font-size:13px;color:var(--text)}
+.fb-btn:hover{border-color:#B9BCE8}
+.fb-btn .caret{width:9px;height:9px;border-right:1.6px solid var(--muted);border-bottom:1.6px solid var(--muted);
+  transform:rotate(45deg) translate(-1px,-1px)}
+.fb-btn .n{background:var(--brand);color:#fff;border-radius:999px;font-size:11px;padding:0 6px;line-height:16px}
+.fb.on .fb-btn{border-color:var(--brand);color:var(--brand)}
+.fb.on .fb-btn .caret{border-color:var(--brand)}
+.fb-panel{display:none;position:absolute;top:calc(100% + 6px);left:0;z-index:40;min-width:230px;max-height:340px;
+  overflow:auto;background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  box-shadow:var(--shadow);padding:10px 12px}
+.fb.open .fb-panel{display:block}
+.fb-panel .opt{font-size:13px;min-height:30px;padding:5px 8px}
+.fb-panel .sub{margin:8px 0 2px}
+.fb-panel .sub:first-child{margin-top:0}
+.fb-clear{margin-left:auto}
+
+
+/* group header — 面包屑样式 */
+.grp{margin-top:26px;scroll-margin-top:100px}
+.grp-head{display:flex;align-items:center;gap:9px;color:var(--brand);font-size:17px;font-weight:600}
+.grp-head .sep{color:var(--border);font-weight:400}
+.grp-head .g2{color:var(--brand-secondary)}
+.grp-head .cnt{margin-left:auto;color:var(--muted);font-size:13px;font-weight:400}
+.grp-sub{color:var(--muted);font-size:13px;margin:5px 0 12px}
+
+/* list view */
+.list{display:grid;gap:14px}
+.lrow{position:relative;display:flex;gap:20px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;cursor:pointer;transition:box-shadow .15s,border-color .15s}
+.lrow:hover{box-shadow:var(--shadow);border-color:#C3C5D8}
+.lthumb{flex:0 0 320px;align-self:flex-start;border-radius:8px;overflow:hidden}
+.lbody{flex:1;min-width:0;display:flex;flex-direction:column;gap:9px}
+.lhead{display:flex;align-items:center;gap:10px;padding-right:150px}
+.lhead h3{margin:0;font-size:19px}
+.lbadge{position:absolute;top:16px;right:16px;font-size:12px;padding:3px 10px;border-radius:7px;background:var(--brand-soft);color:var(--brand-secondary);white-space:nowrap}
+.lbadge.plain{background:var(--subtle);color:var(--muted)}
+.desc{color:#33343f;font-size:14px;line-height:1.7}
+.insight{background:var(--brand-soft);border-radius:8px;padding:11px 14px}
+.insight .ttl{color:var(--brand);font-size:12px;font-weight:600;margin-bottom:6px}
+.scene-chips{display:flex;gap:6px;flex-wrap:wrap}
+.scene-chip{font-size:12px;padding:2px 9px;border-radius:6px;background:var(--surface);color:var(--brand-secondary);border:1px solid #D5D8FB}
+.scene-chip.more{background:transparent;color:var(--muted);border-color:var(--border)}
+.card-foot{display:flex;align-items:center;gap:9px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.badges{display:flex;gap:6px;flex-wrap:wrap}
+.badge{font-size:11px;padding:1px 7px;border-radius:6px;border:1px solid var(--border);color:var(--text);background:var(--surface)}
+.dot{width:3px;height:3px;border-radius:50%;background:#C4C5D0}
+
+/* card view */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px}
+.card{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;cursor:pointer;display:flex;flex-direction:column;transition:transform .15s,box-shadow .15s}
+.card:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+.card-body{padding:15px 17px;display:flex;flex-direction:column;gap:9px;flex:1}
+.card-title{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.card-title h3{margin:0;font-size:16px}
+.card .desc{font-size:13.5px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.card .card-foot{margin-top:auto;padding-top:10px;border-top:1px solid var(--border)}
+
+.demo{width:100%;aspect-ratio:16/9;background:var(--subtle);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;object-fit:cover}
+.demo.cover{position:relative;background-size:cover;background-position:center;background-repeat:no-repeat;display:flex;align-items:flex-end;justify-content:flex-start}
+.demo-badge{position:relative;margin:10px 12px;background:rgba(0,1,17,.55);color:#fff;font-size:12px;padding:3px 10px;border-radius:999px;backdrop-filter:blur(2px)}
+.demo.placeholder{background:linear-gradient(135deg,#F3F3F7,#E6E7F5)}
+.demo.placeholder::before{content:"";width:34px;height:34px;border-radius:50%;border:1.5px solid #B0B1BC;margin-right:9px;background:radial-gradient(circle at 56% 50%,#B0B1BC 0 5px,transparent 6px)}
+.tags{display:flex;gap:6px;flex-wrap:wrap}
+.tag{font-size:12px;padding:2px 9px;border-radius:999px;background:var(--subtle);color:var(--muted)}
+.stage-0{background:var(--brand-soft);color:var(--brand)}
+.stage-1{background:#E3F1F1;color:var(--teal)}
+.stage-2{background:#FBEBE2;color:var(--orange)}
+.stage-3{background:var(--subtle);color:var(--muted)}
+.empty{padding:56px;text-align:center;color:var(--muted)}
+
+/* 整页详情 */
+.detail-toolbar{flex-direction:column;align-items:flex-start;gap:8px;padding:14px 28px 16px}
+.detail-back{display:inline-flex;align-items:center;gap:6px;border:0;background:none;color:var(--muted);font-size:13px;padding:0;margin-bottom:2px}
+.detail-back:hover{color:var(--brand)}
+.detail-title{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.detail-title h1{margin:0;font-size:26px;font-weight:700;letter-spacing:-.01em}
+.detail-toolbar .tags{margin-top:2px}
+.detail-body{display:grid;grid-template-columns:minmax(340px,420px) minmax(0,1fr);gap:24px;align-items:start}
+.detail-left{display:flex;flex-direction:column;gap:20px;position:sticky;top:90px}
+.detail-right{display:flex;flex-direction:column;gap:20px;min-width:0}
+.d-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px 22px}
+.d-card h3{margin:0 0 14px;font-size:15px;font-weight:600}
+.lead-desc{margin:0;font-size:15px;line-height:1.75;color:#2a2b36}
+.story-meta{margin-top:10px;padding-top:10px;border-top:1px solid var(--subtle)}
+.story-meta dl{display:flex;flex-wrap:wrap;gap:8px 22px;margin:0}
+.dcol{display:flex;align-items:baseline;gap:8px}
+.dcol dt{color:var(--muted);font-size:12px}
+.dcol dd{margin:0;font-size:13px}
+.content.detail{max-width:1400px}
+.d-col{display:flex;align-items:baseline;gap:14px;padding:9px 0;border-top:1px solid var(--subtle)}
+.d-col:first-of-type{border-top:0}
+.d-col .k{color:var(--muted);font-size:13px;flex:0 0 88px}
+.d-col .v{font-size:14px}
+.d-col .v.pill{background:var(--brand-soft);color:var(--brand-secondary);border-radius:7px;padding:3px 10px}
+.d-cardsbox{display:flex;flex-direction:column;gap:0}
+.scene-list{display:grid;gap:10px}
+.scene-item{border:1px solid var(--border);border-radius:10px;padding:11px 14px}
+.scene-item b{font-size:14px}
+.scene-item p{margin:4px 0 0;color:var(--muted);font-size:13px;line-height:1.6}
+.story-list{display:grid;gap:10px}
+.story-list li{list-style:none}
+.story{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:13px 16px}
+.story-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+.story-head b{font-size:15px}
+.story-scene{font-size:12px;color:var(--brand-secondary);background:var(--brand-soft);padding:1px 8px;border-radius:6px}
+.story-pain{color:var(--muted);font-size:13px;line-height:1.6;margin:0}
+.story-insight{margin:8px 0 0;padding:9px 12px;background:#F7F7FB;border-left:3px solid var(--brand);border-radius:0 8px 8px 0;font-size:13.5px;line-height:1.65}
+.story-insight .lbl{color:var(--brand);font-size:12px;font-weight:600;margin-right:6px}
+.story-more{margin-top:10px;display:flex;align-items:center;gap:16px;font-size:13px}
+.story-more button{border:0;background:none;color:var(--brand);padding:0;font-weight:500}
+.story-more a{color:var(--muted);text-decoration:none}
+.story-more a:hover{color:var(--brand)}
+.taggrp{margin-bottom:12px}
+.taggrp .g{font-size:12px;color:var(--muted);margin-bottom:5px}
+.taglist{display:flex;gap:6px;flex-wrap:wrap}
+.t3{font-size:12px;padding:2px 9px;border-radius:7px;background:var(--subtle)}
+.demo.large{border-radius:var(--radius);font-size:14px}
+.demo.cover.large{aspect-ratio:16/9;height:auto}
+.demo.placeholder.large{aspect-ratio:auto;height:220px}
+.demo-player{width:100%;aspect-ratio:16/9;background:#000;border-radius:var(--radius)}
+.matrix-wrap{overflow-x:auto}
+.matrix{border-collapse:collapse;font-size:13px;min-width:100%}
+.matrix th,.matrix td{border:1px solid var(--border);padding:6px 10px;text-align:center;white-space:nowrap}
+.matrix thead th{background:var(--subtle);font-weight:500;color:var(--muted)}
+.matrix tbody th{text-align:left;font-weight:600;background:var(--surface)}
+.matrix td.yes{color:var(--brand);font-weight:600;background:var(--brand-soft)}
+.matrix td.maybe{color:#B0B1BC}
+.matrix td.clickable{cursor:pointer}
+.matrix td.clickable:hover{background:var(--brand);color:#fff}
+.matrix th.vendor{background:#E6E7F5;color:var(--text)}
+.legend{display:flex;gap:18px;margin-top:8px;font-size:12px;color:var(--muted);flex-wrap:wrap}
+.drill{margin-top:14px;padding:14px 16px;background:var(--brand-soft);border-radius:8px;font-size:13px}
+.drill-head{font-size:14px;margin-bottom:12px}
+.drill-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.dcard{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;transition:transform .15s,box-shadow .15s}
+.dcard:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+.dcard .demo{aspect-ratio:16/9;flex:0 0 auto}
+.dcard-body{padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.dcard-body .card-title h3{font-size:14px}
+.dcard-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.dcard-meta .muted{font-size:12px}
+
+/* overview */
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;margin-bottom:16px}
+.panel h3{margin:0 0 12px;font-size:15px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+table.plain{width:100%;border-collapse:collapse;font-size:13px}
+table.plain th,table.plain td{padding:8px 10px;text-align:left;border-top:1px solid var(--border);vertical-align:top}
+table.plain thead th{border-top:0;color:var(--muted);font-weight:500}
+table.plain td.yes{color:var(--brand);font-weight:600}
+table.plain .badge{margin:1px 4px 1px 0}
+/* 芯片平台表：识别标签列 + 行内展开 */
+.chiprow:hover td{background:var(--subtle)}
+.chip-toggle{font:inherit;font-weight:600;color:var(--text);background:none;border:0;cursor:pointer;padding:0;text-align:left}
+.chip-toggle:hover{color:var(--brand);text-decoration:underline}
+.cap-cta{font:inherit;font-size:12px;font-weight:500;color:var(--brand);background:var(--brand-soft);border:1px solid transparent;border-radius:6px;padding:2px 8px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.cap-cta:hover{background:var(--brand);color:#fff}
+.cap-cta.open{background:var(--brand);color:#fff}
+.cap-cta .cta-chev{font-size:9px}
+.chip-detail td{background:var(--surface);padding:6px 10px 16px}
+.chip-expand{background:var(--subtle);border-radius:10px;padding:14px 16px}
+.chip-expand-head{font-size:14px;font-weight:600;margin-bottom:10px}
+.chip-expand-head .muted{font-weight:400;margin-left:6px}
+.tg-grid{display:flex;flex-direction:column;gap:8px}
+.tg{border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--surface)}
+.tg-head{width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 12px;font:inherit;font-size:13px;font-weight:500;cursor:pointer;background:none;border:0;text-align:left}
+.tg-head:hover{background:var(--subtle)}
+.tg-src{font-weight:400;font-size:12px}
+.tg-list{display:none;flex-wrap:wrap;gap:6px;padding:0 12px 12px}
+.tg.open .tg-list{display:flex}
+
+@media (max-width:1100px){
+  .lthumb{flex-basis:240px}
+  .lhead{padding-right:120px}
+}
+@media (max-width:900px){
+  .body{display:block}
+  .sidebar{position:static;width:auto;height:auto;border-right:0;border-bottom:1px solid var(--border);padding:16px}
+  .toolbar{position:static;padding:16px 16px 14px}
+  .content{padding:14px 16px 28px}
+  .tabs{margin-left:8px}
+  .header-search{margin-left:auto}
+  .sidebar #filterGroups{display:none}
+  .sidebar.open #filterGroups{display:block}
+  .sidebar.collapsed{width:auto;flex-basis:auto;padding:16px}
+  .sidebar.collapsed .side-h h2,.sidebar.collapsed #clearAll{display:block}
+  .main{padding:16px}
+  .lrow{flex-direction:column;gap:12px}
+  .lthumb{flex-basis:auto;width:100%}
+  .lhead{padding-right:110px}
+  .grid{grid-template-columns:1fr}
+  .two-col{grid-template-columns:1fr}
+  .detail-body{grid-template-columns:1fr}
+  .detail-left{position:static}
+  .header-search.open #q{width:150px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <div class="logo"><img src="assets/brand-logo.png" alt="面壁智能"><span class="logo-divider" aria-hidden="true"></span><span class="logo-title">智能座舱产品库</span></div>
+    <nav class="tabs"><button data-tab="library" class="on">产品库</button><button data-tab="matrix">适配总览</button></nav>
+    <div class="header-search" id="headerSearch">
+      <button class="search-toggle" id="searchToggle" type="button" aria-label="搜索" title="搜索">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m16 16 4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+      <input id="q" type="search" placeholder="搜索产品、场景、标签、模型" aria-label="搜索">
+    </div>
+  </header>
+  <div class="body">
+    <aside class="sidebar" id="sidebar">
+      <div class="side-h">
+        <h2>筛选器</h2>
+        <div class="side-actions">
+          <button class="linkish" id="clearAll">清除</button>
+          <button class="sidebar-toggle" id="sidebarToggle" type="button" aria-label="收起筛选器" title="收起筛选器">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3.5 5.5 8 10 12.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+      </div>
+      <div id="filterGroups"></div>
+    </aside>
+    <main class="main">
+      <section id="tab-library">
+        <div class="toolbar">
+          <h1>产品能力</h1>
+          <span class="lead" id="lead"></span>
+          <div class="controls">
+            <select id="sortBy" class="select"><option value="family">排序：按产品族</option><option value="stage">排序：按阶段</option></select>
+            <div class="seg" id="viewSeg"><button data-view="list" class="on">列表</button><button data-view="card">卡片</button></div>
+          </div>
+        </div>
+        <div class="content">
+          <div class="filterbar" id="filterBar"></div>
+          <div id="results"></div>
+        </div>
+      </section>
+      <section id="tab-detail" hidden></section>
+      <section id="tab-matrix" hidden></section>
+    </main>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script>
+const D = window.DATA;
+const STAGES = ["已交付","售前中","孵化中","待孵化"];
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const chipByName = Object.fromEntries(D.chips.map(c=>[c.name,c]));
+const modelByName = Object.fromEntries(D.models.map(m=>[m.name,m]));
+// 厂商展示顺序：高通 → 英伟达 → Intel → 瑞芯微 → 其他（未列出的排后）
+const VENDOR_ORDER=["高通","英伟达","Intel","瑞芯微","其他"];
+const VENDORS=VENDOR_ORDER.filter(v=>D.chips.some(c=>c.vendor===v))
+  .concat([...new Set(D.chips.map(c=>c.vendor))].filter(v=>!VENDOR_ORDER.includes(v)));
+const CHIP_ORDER=VENDORS.flatMap(v=>D.chips.filter(c=>c.vendor===v).map(c=>c.name));
+const MODEL_ORDER=D.models.map(m=>m.name);
+const byOrder=order=>(a,b)=>order.indexOf(a)-order.indexOf(b);
+for(const p of D.products){p.models.sort(byOrder(MODEL_ORDER));p.chips.sort(byOrder(CHIP_ORDER));}
+const CAPS = [["ocr","OCR"],["instruction","指令遵循"],["functionCall","FunctionCall"],["caption","Caption"]];
+const FAM_TAGLINE = Object.fromEntries(D.families.map(f=>[f.name,f.tagline]));
+
+// 筛选维度。where:"side" 走左栏（浏览型：我是哪类产品）；where:"bar" 走内容区二级筛选条
+// （限定型：能不能落在我的平台上）。新增维度只要往这里加一行，两处渲染都自动生效。
+const GROUPS = [
+  {key:"stage",   title:"阶段",     where:"side", values:()=>STAGES,                       of:p=>[p.stage]},
+  {key:"family",  title:"产品族",   where:"side", values:()=>D.families.map(f=>f.name),    of:p=>[p.family]},
+  {key:"compute", title:"算力方案", where:"bar",  values:()=>["高算力","主流算力","低算力"], of:p=>[p.compute]},
+  {key:"chip",    title:"芯片平台", where:"bar",  values:()=>CHIP_ORDER, groupBy:v=>chipByName[v].vendor, of:p=>p.chips},
+  {key:"model",   title:"模型尺寸", where:"bar",  values:()=>MODEL_ORDER,                  of:p=>p.models},
+];
+const SIDE_GROUPS = GROUPS.filter(g=>g.where==="side");
+const BAR_GROUPS  = GROUPS.filter(g=>g.where==="bar");
+const state = {tab:"library", filters:Object.fromEntries(GROUPS.map(g=>[g.key,new Set()])), q:"", sort:"family", view:"list", open:null, storiesOpen:null, chipExpanded:new Set()};
+state.filters.stage = new Set(["已交付","售前中"]);
+
+function matches(p, skipKey){
+  for(const g of GROUPS){
+    const set = state.filters[g.key];
+    if(g.key===skipKey || !set.size) continue;
+    if(!g.of(p).some(v=>set.has(v))) return false;
+  }
+  if(!state.q) return true;
+  const hay=[p.name,p.family,p.description,...p.models,...p.chips,...p.scenes.map(s=>s.name),
+             ...p.tagGroups.flatMap(t=>t.items),...(p.stories||[]).flatMap(s=>[s.title,s.insight])].join(" ").toLowerCase();
+  return hay.includes(state.q.toLowerCase());
+}
+const visibleProducts = () => D.products.filter(p=>matches(p));
+
+function optionsHTML(g){
+  let html="", last=null;
+  for(const v of g.values()){
+    const grp=g.groupBy?.(v);
+    if(grp&&grp!==last){html+=`<div class="sub">${esc(grp)}</div>`;last=grp;}
+    const n=D.products.filter(p=>matches(p,g.key)&&g.of(p).includes(v)).length;
+    html+=`<label class="opt ${n?"":"zero"}"><input type="checkbox" data-g="${g.key}" value="${esc(v)}" ${state.filters[g.key].has(v)?"checked":""}><span>${esc(v)}</span><em>${n}</em></label>`;
+  }
+  return html;
+}
+function renderFilters(){
+  document.getElementById("filterGroups").innerHTML = SIDE_GROUPS.map(g=>
+    `<section class="section"><h3>${g.title}</h3>${optionsHTML(g)}</section>`).join("");
+}
+function renderBar(){
+  const open=new Set([...document.querySelectorAll(".fb.open")].map(el=>el.dataset.k));
+  const parts=BAR_GROUPS.map(g=>{
+    const sel=state.filters[g.key];
+    return `<div class="fb ${sel.size?"on":""} ${open.has(g.key)?"open":""}" data-k="${g.key}">
+      <button class="fb-btn" data-fb="${g.key}" type="button">${g.title}${sel.size?`<span class="n">${sel.size}</span>`:""}<span class="caret"></span></button>
+      <div class="fb-panel">${optionsHTML(g)}</div></div>`;
+  });
+  const chips=GROUPS.flatMap(g=>[...state.filters[g.key]].map(v=>`<button class="chip" data-g="${g.key}" data-v="${esc(v)}">${esc(v)} ×</button>`));
+  const any=chips.length;
+  document.getElementById("filterBar").innerHTML =
+    `<span class="fb-label">按平台筛选</span>${parts.join("")}${chips.length?`<div class="filter-chips">${chips.join("")}</div>`:""}`
+    + (any?`<button class="linkish fb-clear" id="clearAll2">清除全部</button>`:"");
+}
+function coverPath(id){
+  return `assets/covers/${id}.jpg`;
+}
+function demoBlock(p, cls){
+  if(p.demo) return `<video class="demo ${cls||""}" src="${esc(p.demo)}" muted playsinline preload="metadata"></video>`;
+  const cover=coverPath(p.id);
+  if(cover) return `<div class="demo cover ${cls||""}" style="background-image:url('${cover}')"><span class="demo-badge">Demo 制作中</span></div>`;
+  return `<div class="demo placeholder ${cls||""}">Demo 制作中</div>`;
+}
+function sceneChips(p, max){
+  if(!p.scenes.length) return "";
+  return p.scenes.slice(0,max).map(s=>`<span class="scene-chip">${esc(s.name)}</span>`).join("")
+    + (p.scenes.length>max?`<span class="scene-chip more">+${p.scenes.length-max}</span>`:"");
+}
+function foot(p){
+  const f=[];
+  if(p.models.length) f.push(`<span class="badges">${p.models.map(m=>`<span class="badge">${esc(m)}</span>`).join("")}</span>`);
+  if(p.tagCount)      f.push(`${p.tagCount} 个识别标签`);
+  if(p.stories?.length) f.push(`${p.stories.length} 个用户故事`);
+  if(p.chips.length)  f.push(`${p.chips.length} 个平台`);
+  return f.length?`<div class="card-foot">${f.join('<span class="dot"></span>')}</div>`:"";
+}
+function listRow(p){
+  const badge = state.sort==="stage" ? `<span class="lbadge plain">${esc(p.family)}</span>`
+                                     : `<span class="lbadge">${esc(p.stage)}</span>`;
+  return `<article class="lrow" data-id="${p.id}">${badge}
+    <div class="lthumb">${demoBlock(p)}</div>
+    <div class="lbody">
+      <div class="lhead"><h3>${esc(p.name)}</h3></div>
+      <div class="tags">${[...p.types,p.compute].filter(Boolean).map(t=>`<span class="tag">${esc(t)}</span>`).join("")}</div>
+      ${p.description?`<p class="desc">${esc(p.description)}</p>`:""}
+      ${p.scenes.length?`<div class="insight"><div class="ttl">已落地场景 · ${p.scenes.length}</div><div class="scene-chips">${sceneChips(p,6)}</div></div>`:""}
+      ${foot(p)}
+    </div></article>`;
+}
+function card(p){
+  return `<article class="card" data-id="${p.id}">
+    <span class="lbadge">${esc(p.stage)}</span>${demoBlock(p)}
+    <div class="card-body">
+      <div class="card-title"><h3>${esc(p.name)}</h3>${p.compute?`<span class="tag">${esc(p.compute)}</span>`:""}</div>
+      ${p.description?`<div class="desc">${esc(p.description)}</div>`:""}
+      ${p.scenes.length?`<div class="scene-chips">${sceneChips(p,3)}</div>`:""}
+      ${foot(p)}
+    </div></article>`;
+}
+function renderResults(){
+  const list=visibleProducts();
+  const total=D.products.length;
+  document.getElementById("lead").textContent = list.length===total?`全部 ${total} 个产品`:`${list.length} / ${total} 个产品`;
+  const box=document.getElementById("results");
+  if(!list.length){box.innerHTML=`<div class="empty">没有匹配的产品</div>`;return;}
+  const render = state.view==="list"?listRow:card;
+  const wrap = html => `<div class="${state.view==="list"?"list":"grid"}">${html}</div>`;
+  const buckets = state.sort==="stage"
+    ? STAGES.map(s=>({key:s, sub:"", items:list.filter(p=>p.stage===s)}))
+    : D.families.map(f=>({key:f.name, sub:f.tagline, items:list.filter(p=>p.family===f.name)}));
+  box.innerHTML = buckets.filter(b=>b.items.length).map((b,i)=>
+    `<div class="grp" id="grp-${i}">
+      <div class="grp-head"><span class="g1">${state.sort==="stage"?"阶段":"产品族"}</span><span class="sep">|</span><span class="g2">${esc(b.key)}</span><span class="cnt">${b.items.length} 个产品</span></div>
+      ${b.sub?`<div class="grp-sub">${esc(b.sub)}</div>`:`<div class="grp-sub"></div>`}
+      ${wrap(b.items.map(render).join(""))}
+    </div>`).join("");
+}
+function render(){
+  const isDetail = state.tab==="detail" && state.open;
+  const active = isDetail ? "library" : state.tab;
+  document.querySelectorAll(".tabs button").forEach(b=>b.classList.toggle("on",b.dataset.tab===active));
+  document.getElementById("tab-library").hidden = active!=="library" || isDetail;
+  document.getElementById("tab-detail").hidden  = !isDetail;
+  document.getElementById("tab-matrix").hidden  = active!=="matrix";
+  document.getElementById("sidebar").hidden = active!=="library" || isDetail;
+  if(isDetail){renderDetail();}
+  else if(active==="library"){renderFilters();renderBar();renderResults();}
+  else if(active==="matrix"){renderMatrix();}
+  writeHash();
+}
+
+// hash 状态
+function writeHash(){
+  const h=new URLSearchParams({tab:state.tab,view:state.view,sort:state.sort});
+  for(const g of GROUPS) h.set(g.key,[...state.filters[g.key]].join("|"));
+  if(state.q) h.set("q",state.q);
+  if(state.open) h.set("open",state.open);
+  history.replaceState(null,"","#"+h.toString());
+}
+function applyHash(){
+  const h=new URLSearchParams(location.hash.slice(1));
+  if(!h.has("tab")) return;
+  state.tab=h.get("tab"); state.q=h.get("q")||""; state.open=h.get("open");
+  state.view=h.get("view")||"list"; state.sort=h.get("sort")||"family";
+  for(const g of GROUPS) state.filters[g.key]=new Set((h.get(g.key)||"").split("|").filter(Boolean));
+  const qi=document.getElementById("q"); qi.value=state.q;
+  if(state.q) document.getElementById("headerSearch").classList.add("open");
+  document.getElementById("sortBy").value=state.sort;
+  document.querySelectorAll("#viewSeg button").forEach(b=>b.classList.toggle("on",b.dataset.view===state.view));
+}
+
+// 详情弹窗
+function cellMark(model, chip, product){
+  const platformCan = !!chipByName[chip]?.models.includes(model);
+  const verified = product ? product.chips.includes(chip) && platformCan
+                           : platformCan && D.products.some(p=>p.models.includes(model)&&p.chips.includes(chip));
+  return verified ? "●" : platformCan ? "○" : "";
+}
+// 8x97 等合并芯片的悬浮提示：还原分档（8397 / 8797单核 / 8797 3-4核）各能跑什么
+function chipTitle(name){
+  const c=chipByName[name]; if(!c||!c.parts||c.parts.length<2) return "";
+  return `${name} = `+c.parts.map(pt=>`${pt.name.replace(/^高通\s/,"")}（${pt.models.length?pt.models.join("/"):"未验证"}）`).join(" + ");
+}
+// 某个芯片平台能交付的识别能力 = 跑在它上面的产品所带识别标签的并集（按分组归并，标出贡献产品）
+function chipTags(name){
+  const map=new Map(), order=[];
+  const prods=D.products.filter(p=>p.chips.includes(name));
+  for(const p of prods){
+    for(const g of p.tagGroups||[]){
+      if(!map.has(g.group)){map.set(g.group,{items:[],prods:[]});order.push(g.group);}
+      const e=map.get(g.group);
+      for(const it of g.items) if(!e.items.includes(it)) e.items.push(it);
+      if(p.name && !e.prods.includes(p.name)) e.prods.push(p.name);
+    }
+  }
+  return {groups:order.map(g=>({group:g,items:map.get(g).items,prods:map.get(g).prods})), count:order.reduce((n,g)=>n+map.get(g).items.length,0)};
+}
+function chipExpandHTML(c){
+  const t=chipTags(c.name);
+  if(!t.count) return `<div class="chip-expand muted">该平台暂无产品跑出识别标签</div>`;
+  const groups=t.groups.map(g=>`<div class="tg"><button class="tg-head" data-tg>
+      <span>${esc(g.group)}</span><span class="tg-src">${g.prods.length?`<span class="muted">${g.prods.length===1?esc(g.prods[0]):`${esc(g.prods[0])} 等 ${g.prods.length} 个产品`}</span>`:""}</span></button>
+    <div class="tg-list">${g.items.map(x=>`<span class="t3">${esc(x)}</span>`).join("")}</div></div>`).join("");
+  return `<div class="chip-expand"><div class="chip-expand-head">识别能力 · ${esc(c.name)} · ${t.count} 个标签<span class="muted">（来自该平台 ${D.products.filter(p=>p.chips.includes(c.name)).length} 个产品）</span></div>
+    <div class="tg-grid">${groups}</div></div>`;
+}
+function matrixTable(rows, cols, mark){
+  return `<div class="matrix-wrap"><table class="matrix"><thead><tr><th></th>${cols.map(c=>`<th title="${esc(chipTitle(c))}">${esc(c)}</th>`).join("")}</tr></thead><tbody>
+    ${rows.map(r=>`<tr><th>${esc(r)}</th>${cols.map(c=>{const m=mark(r,c);return `<td class="${m==="●"?"yes":m==="○"?"maybe":""}" title="${esc(chipTitle(c))}">${m}</td>`;}).join("")}</tr>`).join("")}
+  </tbody></table></div><div class="legend"><span>● 已在项目验证</span><span>○ 平台具备能力</span></div>`;
+}
+const STORY_PREVIEW=3;
+function storyCard(st){
+  return `<div class="story"><div class="story-head"><b>${esc(st.title)}</b><span class="story-scene">${esc(st.scene)}${st.subScene?` · ${esc(st.subScene)}`:""}</span></div>
+    ${st.pain?`<p class="story-pain">${esc(st.pain)}</p>`:""}
+    <div class="story-insight"><span class="lbl">需求洞察</span>${esc(st.insight)}</div>
+    ${(st.valueTheme||st.userValue||st.source)?`<div class="story-meta"><dl>${st.valueTheme?`<div class="dcol"><dt>价值主题</dt><dd>${esc(st.valueTheme)}</dd></div>`:""}${st.userValue?`<div class="dcol"><dt>用户价值</dt><dd>${esc(st.userValue)}</dd></div>`:""}${st.source?`<div class="dcol"><dt>信息来源</dt><dd>${esc(st.source)}</dd></div>`:""}</dl></div>`:""}
+  </div>`;
+}
+function storiesBlock(p, expanded){
+  const all=p.stories||[]; if(!all.length) return "";
+  const shown=expanded?all:all.slice(0,STORY_PREVIEW), rest=all.length-STORY_PREVIEW;
+  const more=rest>0&&!expanded?`<button data-stories-expand="${p.id}">展开其余 ${rest} 条</button>`:"";
+  const lib=`<a target="_blank" rel="noopener" href="https://modelbest-supermate.github.io/cabin-scenario-library/">前往场景库浏览全部用户故事 →</a>`;
+  return `<div class="d-card"><h3>用户场景</h3><div class="story-list">${shown.map(storyCard).join("")}</div>
+    <div class="story-more">${more}${lib}</div></div>`;
+}
+function infoCard(p){
+  return `<div class="d-card"><h3>产品信息</h3>
+    <div class="d-col"><span class="k">产品族</span><span class="v">${esc(p.family)}</span></div>
+    <div class="d-col"><span class="k">产品类型</span><span class="v">${p.types.map(t=>`<span class="v pill">${esc(t)}</span>`).join(" ")}</span></div>
+    <div class="d-col"><span class="k">算力方案</span><span class="v">${p.compute?esc(p.compute):"—"}</span></div>
+    <div class="d-col"><span class="k">阶段</span><span class="v"><span class="tag stage-${STAGES.indexOf(p.stage)}">${esc(p.stage)}</span></span></div>
+    <div class="d-col"><span class="k">已落地场景</span><span class="v">${p.scenes.length} 个</span></div>
+    <div class="d-col"><span class="k">识别标签</span><span class="v">${p.tagCount} 个</span></div>
+    </div>`;
+}
+function detailMain(p, expanded){
+  const cover=coverPath(p.id);
+  const demo=p.demo?`<video class="demo-player" src="${esc(p.demo)}" controls playsinline></video>`
+    : cover?`<div class="demo cover large" style="background-image:url('${cover}')"><span class="demo-badge">Demo 制作中</span></div>`
+    :`<div class="demo placeholder large">Demo 制作中</div>`;
+  const scenes=p.scenes.length?`<div class="d-card"><h3>已落地场景 · ${p.scenes.length}</h3><div class="scene-list">${p.scenes.map(s=>`<div class="scene-item"><b>${esc(s.name)}</b>${s.desc?`<p>${esc(s.desc)}</p>`:""}</div>`).join("")}</div></div>`:"";
+  const tagblk=p.tagGroups.length?`<div class="d-card"><h3>识别能力标签 · ${p.tagCount}</h3>${p.tagGroups.map(t=>`<div class="taggrp"><div class="g">${esc(t.group)}</div><div class="taglist">${t.items.map(x=>`<span class="t3">${esc(x)}</span>`).join("")}</div></div>`).join("")}</div>`:"";
+  const matrix=p.models.length&&p.chips.length?`<div class="d-card"><h3>模型 × 芯片适配</h3>${matrixTable(p.models,p.chips,(m,c)=>cellMark(m,c,p))}</div>`:"";  return `
+  <div class="detail-left">
+    <div class="d-card"><h3>Demo</h3>${demo}</div>
+    ${infoCard(p)}
+  </div>
+  <div class="detail-right">
+    ${p.description?`<div class="d-card"><h3>产品方案</h3><p class="lead-desc">${esc(p.description)}</p></div>`:""}
+    ${storiesBlock(p, expanded)}
+    ${scenes}
+    ${tagblk}
+    ${matrix}
+  </div>`;
+}
+function backToList(){ state.tab="library"; state.open=null; render(); window.scrollTo(0,0); }
+function showDetail(id){
+  const p=D.products.find(x=>x.id===id); if(!p) return;
+  if(state.open!==id) state.storiesOpen=null;
+  state.open=id; state.tab="detail"; render(); window.scrollTo(0,0);
+}
+function renderDetail(){
+  const p=D.products.find(x=>x.id===state.open); if(!p) return;
+  const tags=[p.family,...p.types,p.compute].filter(Boolean).map(t=>`<span class="tag">${esc(t)}</span>`).join("")+`<span class="tag stage-${STAGES.indexOf(p.stage)}">${p.stage}</span>`;
+  document.getElementById("tab-detail").innerHTML=`
+    <div class="toolbar detail-toolbar">
+      <button class="detail-back" data-back><span aria-hidden="true">←</span> 返回产品列表</button>
+      <div class="detail-title"><h1>${esc(p.name)}</h1></div>
+      <div class="tags">${tags}</div>
+    </div>
+    <div class="content detail"><div class="detail-body">${detailMain(p, state.storiesOpen===p.id)}</div></div>`;
+}
+
+// 适配总览
+function renderMatrix(){
+  const vendors=VENDORS, cols=CHIP_ORDER, rows=MODEL_ORDER;
+  const chipsSorted=[...D.chips].sort((a,b)=>byOrder(CHIP_ORDER)(a.name,b.name));
+  const count=(m,c)=>chipByName[c].models.includes(m)?D.products.filter(p=>p.models.includes(m)&&p.chips.includes(c)).length:0;
+  const grid=`<div class="matrix-wrap"><table class="matrix big"><thead>
+      <tr><th rowspan="2">模型 \\ 芯片</th>${vendors.map(v=>`<th colspan="${D.chips.filter(c=>c.vendor===v).length}" class="vendor">${esc(v)}</th>`).join("")}</tr>
+      <tr>${cols.map(c=>`<th title="${esc(chipTitle(c))}">${esc(c.replace(/^(高通|Intel)\s/,""))}</th>`).join("")}</tr></thead><tbody>
+      ${rows.map(r=>`<tr><th>${esc(r)}</th>${cols.map(c=>{const n=count(r,c), mk=cellMark(r,c,null);
+        return n?`<td class="yes clickable" data-m="${esc(r)}" data-c="${esc(c)}" title="${esc(chipTitle(c))}">${n}</td>`:`<td class="${mk==="○"?"maybe":""}" title="${esc(chipTitle(c))}">${mk}</td>`;}).join("")}</tr>`).join("")}
+    </tbody></table></div><div class="legend"><span>数字 = 已在该平台验证的产品数（点击查看）</span><span>○ 平台具备能力，暂无产品验证</span></div><div id="matrixDrill"></div>`;
+  const modelTable=`<table class="plain"><thead><tr><th>模型</th><th>类型</th><th>服役年限</th>${CAPS.map(([,l])=>`<th>${l}</th>`).join("")}</tr></thead><tbody>
+    ${D.models.map(m=>`<tr><td><b>${esc(m.name)}</b></td><td>${esc(m.type)}</td><td>${esc(m.year||"—")}</td>${CAPS.map(([k])=>`<td class="${m[k]?"yes":""}">${m[k]?"✓":"—"}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+  const chipTable=`<table class="plain"><thead><tr><th>芯片平台</th><th>厂商</th><th>已跑模型</th><th>识别能力</th></tr></thead><tbody>
+    ${chipsSorted.map(c=>{const t=chipTags(c.name), open=state.chipExpanded.has(c.name);
+      const act=t.count?`<button class="cap-cta${open?" open":""}" data-chip="${esc(c.name)}" aria-expanded="${open}">查看识别能力<span class="cta-chev">${open?"▴":"▾"}</span></button>`:`<span class="muted">—</span>`;
+      return `<tr class="chiprow"><td><button class="chip-toggle" data-chip="${esc(c.name)}" title="${esc(chipTitle(c.name))}" aria-expanded="${open}">${esc(c.name)}</button></td>
+        <td>${esc(c.vendor)}</td><td>${c.models.map(m=>`<span class="badge">${esc(m)}</span>`).join("")||"—"}</td>
+        <td>${act}</td></tr>
+        ${open?`<tr class="chip-detail"><td colspan="4">${chipExpandHTML(c)}</td></tr>`:""}`;}).join("")}</tbody></table>`;
+  document.getElementById("tab-matrix").innerHTML=`<div class="toolbar"><h1>适配总览</h1><span class="lead">${D.models.length} 个模型 × ${D.chips.length} 个芯片平台</span></div><div class="content">
+    <section class="panel"><h3>模型 × 芯片</h3>${grid}</section>
+    <div class="two-col"><section class="panel"><h3>模型尺寸</h3>${modelTable}</section><section class="panel"><h3>芯片平台</h3>${chipTable}</section></div></div>`;
+}
+
+// 事件
+document.addEventListener("click",e=>{
+  const back=e.target.closest("[data-back]"); if(back){backToList();return;}
+  const open=e.target.closest("[data-open]"); if(open){e.preventDefault();showDetail(open.dataset.open);return;}
+  const ex=e.target.closest("[data-stories-expand]");
+  if(ex){const y=window.scrollY;state.storiesOpen=ex.dataset.storiesExpand;renderDetail();window.scrollTo(0,y);return;}
+  // 二级筛选条下拉：点按钮开合，点面板内不关，点别处关
+  const fbBtn=e.target.closest("[data-fb]");
+  if(fbBtn){const box=fbBtn.closest(".fb");const was=box.classList.contains("open");
+    document.querySelectorAll(".fb.open").forEach(el=>el.classList.remove("open"));
+    if(!was) box.classList.add("open"); return;}
+  if(!e.target.closest(".fb-panel")) document.querySelectorAll(".fb.open").forEach(el=>el.classList.remove("open"));
+  // 芯片平台表：点芯片名 / 计数开合该芯片的识别标签明细
+  const chipBtn=e.target.closest("[data-chip]");
+  if(chipBtn){const n=chipBtn.dataset.chip;
+    if(state.chipExpanded.has(n)) state.chipExpanded.delete(n); else state.chipExpanded.add(n);
+    renderMatrix(); return;}
+  // 芯片明细里的分组：点组头折叠/展开该组标签
+  const tgHead=e.target.closest("[data-tg]");
+  if(tgHead){tgHead.closest(".tg").classList.toggle("open"); return;}
+  // 总览矩阵格子：在表格下方展开该组合的产品列表
+  const td=e.target.closest("td.clickable");
+  if(td){const list=D.products.filter(p=>p.models.includes(td.dataset.m)&&p.chips.includes(td.dataset.c));
+    const box=document.getElementById("matrixDrill");
+    if(box){box.innerHTML=`<div class="drill"><div class="drill-head"><b>${esc(td.dataset.m)} × ${esc(td.dataset.c)}</b><span class="muted"> · ${list.length} 个产品已在该组合上验证</span></div>
+      <div class="drill-grid">${list.map(p=>`<article class="dcard" data-id="${p.id}" data-open="${p.id}">
+        ${coverPath(p.id)?`<div class="demo cover" style="background-image:url('${coverPath(p.id)}')"></div>`:`<div class="demo placeholder"></div>`}
+        <div class="dcard-body"><div class="card-title"><h3>${esc(p.name)}</h3></div>
+          <div class="dcard-meta"><span class="tag stage-${STAGES.indexOf(p.stage)}">${esc(p.stage)}</span><span class="muted">${esc(p.family)}</span></div></div></article>`).join("")}</div></div>`;
+      box.scrollIntoView({block:"nearest"});}
+    return;}
+  const t=e.target.closest("[data-tab],[data-view],.chip,#clearAll,#clearAll2,#sidebarToggle,#searchToggle,.lrow,.card");
+  if(!t) return;
+  if(t.dataset.tab){state.tab=t.dataset.tab;render();window.scrollTo(0,0);}
+  else if(t.dataset.view){state.view=t.dataset.view;document.querySelectorAll("#viewSeg button").forEach(b=>b.classList.toggle("on",b===t));renderResults();writeHash();}
+  else if(t.classList.contains("chip")){state.filters[t.dataset.g].delete(t.dataset.v);render();}
+  else if(t.id==="clearAll"||t.id==="clearAll2"){for(const g of GROUPS) state.filters[g.key].clear();render();}
+  else if(t.id==="sidebarToggle"){const s=document.getElementById("sidebar");
+    if(window.matchMedia("(max-width:900px)").matches) s.classList.toggle("open"); else s.classList.toggle("collapsed");}
+  else if(t.id==="searchToggle"){const h=document.getElementById("headerSearch");h.classList.toggle("open");if(h.classList.contains("open"))document.getElementById("q").focus();}
+  else if(t.classList.contains("lrow")||t.classList.contains("card")) showDetail(t.dataset.id);
+});
+document.addEventListener("change",e=>{
+  const c=e.target;
+  if(c.matches('input[type=checkbox][data-g]')){c.checked?state.filters[c.dataset.g].add(c.value):state.filters[c.dataset.g].delete(c.value);render();}
+  if(c.id==="sortBy"){state.sort=c.value;renderResults();writeHash();}
+});
+document.getElementById("q").addEventListener("input",e=>{state.q=e.target.value.trim();renderResults();writeHash();});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&state.tab==="detail")backToList();});
+
+applyHash(); render();
+</script>
+</body>
+</html>
